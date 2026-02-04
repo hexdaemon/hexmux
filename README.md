@@ -77,6 +77,44 @@ chmod +x hexmux/scripts/*.sh
 export PATH="$PATH:$(pwd)/hexmux/scripts"
 ```
 
+## Ecosystem
+
+Hexmux is the **fallback layer** in the agent autonomy stack — used when MCP servers aren't available or agents need filesystem write access.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Agent Autonomy Stack                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────┐   MCP first    ┌──────────┐                   │
+│  │ hexswarm │───────────────▶│  Agent   │                   │
+│  │          │                │  Server  │                   │
+│  │          │   if write     └──────────┘                   │
+│  │          │   needed or                                    │
+│  │          │   MCP fails    ┌──────────┐                   │
+│  │          │───────────────▶│  hexmux  │◀── YOU ARE HERE   │
+│  └──────────┘                │  (tmux)  │                   │
+│                              └──────────┘                   │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Why Tmux Fallback?
+
+Some agents (e.g., Codex) run in **read-only sandboxes**. When a task requires writing files:
+1. hexswarm's `smart-delegate.sh` detects write intent in the task description
+2. Falls back to hexmux, sending the prompt directly to the agent's tmux pane
+3. Agent completes the task and calls `notify-done.sh` when finished
+
+### Related Components
+
+| Component | Purpose | GitHub |
+|-----------|---------|--------|
+| **hexswarm** | Agent coordination via MCP. Primary delegation path. | [hexdaemon/hexswarm](https://github.com/hexdaemon/hexswarm) |
+| **hexmux** | Tmux orchestration fallback. For write operations. | [hexdaemon/hexmux](https://github.com/hexdaemon/hexmux) |
+| **hexmem** | Structured memory. Shared lessons and context. | [hexdaemon/hexmem](https://github.com/hexdaemon/hexmem) |
+| **archon-skill** | Decentralized identity operations. | [hexdaemon/archon-skill](https://github.com/hexdaemon/archon-skill) |
+
 ## Integration with OpenClaw
 
 This skill is designed to work with [OpenClaw](https://github.com/openclaw/openclaw) for AI agent orchestration. Place in your skills directory and reference from SKILL.md.
